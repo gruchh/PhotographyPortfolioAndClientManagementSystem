@@ -4,7 +4,7 @@ package com.gruchh.blog.controller;
 import com.gruchh.blog.dto.JwtAuthRequest;
 import com.gruchh.blog.dto.JwtAuthResponse;
 import com.gruchh.blog.dto.RegisterRequest;
-import com.gruchh.blog.dto.UserMeResponse;
+import com.gruchh.blog.dto.UserProfileResponse;
 import com.gruchh.blog.security.JwtTokenValidator;
 import com.gruchh.blog.service.auth.UserService;
 import com.gruchh.blog.shared.exception.ValidationException;
@@ -54,27 +54,27 @@ public class SecurityController {
     }
 
     @GetMapping("/getCurrentUser")
-    public ResponseEntity<UserMeResponse> getCurrentUser(HttpServletRequest request) {
+    public ResponseEntity<UserProfileResponse> getCurrentUser(HttpServletRequest request) {
         log.info("Przetwarzanie żądania getCurrentUser");
         try {
             String username = jwtTokenValidator.validateToken(request)
                     .orElseThrow(() -> new RuntimeException("Błąd walidacji tokenu"));
             log.debug("Zweryfikowano token dla użytkownika: {}", username);
-            UserMeResponse response = userService.getCurrentUserInfo(username);
+            UserProfileResponse response = userService.getCurrentUserInfo(username);
             response.setStatus("success");
             log.debug("Pobrano dane użytkownika: {}", username);
             return ResponseEntity.ok(response);
         } catch (ValidationException e) {
             log.warn("Błąd walidacji JWT: {}", e.getMessage());
             return ResponseEntity.status(e.getStatus())
-                    .body(UserMeResponse.builder()
+                    .body(UserProfileResponse.builder()
                             .status("error")
                             .message(e.getMessage())
                             .build());
         } catch (Exception e) {
             log.error("Błąd podczas pobierania danych użytkownika", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(UserMeResponse.builder()
+                    .body(UserProfileResponse.builder()
                             .status("error")
                             .message("Wewnętrzny błąd serwera: " + e.getMessage())
                             .build());

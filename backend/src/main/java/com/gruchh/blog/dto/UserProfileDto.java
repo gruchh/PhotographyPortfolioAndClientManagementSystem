@@ -1,24 +1,15 @@
 package com.gruchh.blog.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.Set;
 
-@Data
+@Getter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class UserMeResponse {
-
-    private String status;
-    private String message;
-    private UserData data;
-
-    @Getter
-    @Builder
-    public static class UserData {
+public class UserProfileDto {
     private Long id;
     private String username;
     private String email;
@@ -26,5 +17,4 @@ public class UserMeResponse {
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
     private LocalDateTime createdAt;
-    }
 }

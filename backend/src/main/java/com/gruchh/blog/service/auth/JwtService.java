@@ -1,7 +1,11 @@
 package com.gruchh.blog.service.auth;
 
 import com.gruchh.blog.entity.Role;
+import com.gruchh.blog.shared.exception.JwtConfigurationException;
+import com.gruchh.blog.shared.exception.JwtException;
+import com.gruchh.blog.shared.exception.JwtTokenExpiredException;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -26,13 +30,16 @@ public class JwtService {
     @Value("${jwt.token.duration:3600000}")
     private Long tokenDurationTime;
 
+    @Value("${jwt.token.issuer:nobody}")
+    private String tokenIssuer;
+
     @PostConstruct
     public void init() {
         if (secretkey == null || secretkey.length() < 32) {
-            log.info("Wczytany klucz JWT: {}", secretkey);
-            throw new IllegalStateException("Klucz JWT musi mieć co najmniej 32 znaki dla HS256");
+            log.error("Loaded JWT key is too short: {} characters", secretkey != null ? secretkey.length() : 0);
+            throw new JwtConfigurationException("JWT key must have at least 32 characters for HS256 algorithm");
         }
-        log.info("JwtService zainicjalizowany z kluczem o długości {} znaków", secretkey.length());
+        log.info("JwtService initialized with key length of {} characters", secretkey.length());
     }
 
     public String generateToken(String username, String email, Set<Role> roles) {
@@ -45,6 +52,7 @@ public class JwtService {
         return Jwts.builder()
                 .claims(claims)
                 .subject(username)
+                .issuer(tokenIssuer)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + tokenDurationTime))
                 .signWith(getKey(), Jwts.SIG.HS256)
@@ -53,7 +61,7 @@ public class JwtService {
 
     private SecretKey getKey() {
         byte[] keyBytes = secretkey.getBytes(StandardCharsets.UTF_8);
-        log.debug("Pobieranie klucza JWT, długość: {} bajtów", keyBytes.length);
+        log.debug("Retrieving JWT key, length: {} bytes", keyBytes.length);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
@@ -92,9 +100,12 @@ public class JwtService {
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
+        } catch (ExpiredJwtException e) {
+            log.error("JWT token has expired: {}", e.getMessage());
+            throw new JwtTokenExpiredException("JWT token has expired");
         } catch (Exception e) {
-            log.error("Błąd podczas parsowania tokenu JWT: {}", e.getMessage());
-            throw new RuntimeException("Nieprawidłowy token JWT", e);
+            log.error("Error parsing JWT token: {}", e.getMessage());
+            throw new JwtException("Invalid JWT token", e);
         }
     }
 
@@ -102,8 +113,14 @@ public class JwtService {
         try {
             final String userName = extractUsername(token);
             return (userName.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        } catch (JwtTokenExpiredException e) {
+            log.error("JWT token validation failed - token expired for user: {}", userDetails.getUsername());
+            return false;
+        } catch (JwtException e) {
+            log.error("JWT token validation failed for user {}: {}", userDetails.getUsername(), e.getMessage());
+            return false;
         } catch (Exception e) {
-            log.error("Błąd walidacji tokenu JWT: {}", e.getMessage());
+            log.error("Unexpected error during JWT token validation for user {}: {}", userDetails.getUsername(), e.getMessage());
             return false;
         }
     }
@@ -112,14 +129,25 @@ public class JwtService {
         try {
             final String extractedUsername = extractUsername(token);
             return (extractedUsername.equals(username) && !isTokenExpired(token));
+        } catch (JwtTokenExpiredException e) {
+            log.error("JWT token validation failed - token expired for user: {}", username);
+            return false;
+        } catch (JwtException e) {
+            log.error("JWT token validation failed for user {}: {}", username, e.getMessage());
+            return false;
         } catch (Exception e) {
-            log.error("Błąd walidacji tokenu JWT dla użytkownika {}: {}", username, e.getMessage());
+            log.error("Unexpected error during JWT token validation for user {}: {}", username, e.getMessage());
             return false;
         }
     }
 
     public boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+        try {
+            return extractExpiration(token).before(new Date());
+        } catch (ExpiredJwtException e) {
+            log.debug("Token is expired: {}", e.getMessage());
+            return true;
+        }
     }
 
     public Date extractExpiration(String token) {
@@ -129,8 +157,14 @@ public class JwtService {
     public boolean isTokenValid(String token) {
         try {
             return !isTokenExpired(token);
+        } catch (JwtTokenExpiredException e) {
+            log.error("JWT token validity check failed - token expired: {}", e.getMessage());
+            return false;
+        } catch (JwtException e) {
+            log.error("JWT token validity check failed: {}", e.getMessage());
+            return false;
         } catch (Exception e) {
-            log.error("Błąd sprawdzania ważności tokenu JWT: {}", e.getMessage());
+            log.error("Unexpected error during JWT token validity check: {}", e.getMessage());
             return false;
         }
     }

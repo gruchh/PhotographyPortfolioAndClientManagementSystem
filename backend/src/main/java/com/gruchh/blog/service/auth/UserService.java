@@ -2,7 +2,7 @@ package com.gruchh.blog.service.auth;
 
 import com.gruchh.blog.dto.JwtAuthRequest;
 import com.gruchh.blog.dto.RegisterRequest;
-import com.gruchh.blog.dto.UserMeResponse;
+import com.gruchh.blog.dto.UserProfileResponse;
 import com.gruchh.blog.entity.Role;
 import com.gruchh.blog.entity.User;
 import com.gruchh.blog.mapper.UserResponseMapper;
@@ -70,10 +70,10 @@ public class UserService {
         }
     }
 
-    public UserMeResponse getCurrentUserInfo(String username) {
+    public UserProfileResponse getCurrentUserInfo(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new NoSuchElementException("User not found: " + username));
-    return userResponseMapper.toUserMeResponse(user);
+    return userResponseMapper.toUserProfileResponse(user);
 
     }
 }
