@@ -17,6 +17,6 @@ public class CreateBlogPostDto {
     private String content;
     private String excerpt;
     private String featuredImage;
-    private Boolean isPublished = false;
+    private Boolean isPublished ;
     private LocalDateTime publishedAt;
 }

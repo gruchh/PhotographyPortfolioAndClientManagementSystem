@@ -1,8 +1,8 @@
 package com.gruchh.blog.security.service;
 
-import com.gruchh.blog.security.repository.UserRepository;
 import com.gruchh.blog.security.entity.User;
 import com.gruchh.blog.security.entity.UserPrincipal;
+import com.gruchh.blog.security.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

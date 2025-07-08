@@ -27,6 +27,6 @@ public class CreatePhotoShootDto {
     private ShootType shootType;
 
     private String location;
-    private Boolean isActive = true;
+    private Boolean isActive;
     private Long clientId;
 }

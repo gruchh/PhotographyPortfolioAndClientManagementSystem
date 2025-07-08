@@ -13,11 +13,10 @@ import lombok.NoArgsConstructor;
 public class CreateCategoryDto {
     @NotBlank(message = "Name is required")
     private String name;
-
     private String description;
 
     @NotBlank(message = "Slug is required")
     private String slug;
 
-    private Boolean isActive = true;
+    private Boolean isActive;
 }

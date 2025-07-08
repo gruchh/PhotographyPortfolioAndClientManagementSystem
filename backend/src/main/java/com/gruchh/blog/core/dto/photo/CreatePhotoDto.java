@@ -28,9 +28,8 @@ public class CreatePhotoDto {
     private Long fileSize;
     private Integer imageWidth;
     private Integer imageHeight;
-    private Boolean isPublic = false;
-    private Boolean isFeatured = false;
-
+    private Boolean isPublic;
+    private Boolean isFeature;
     private Long categoryId;
     private Long photoShootId;
     private Set<Long> tagIds;

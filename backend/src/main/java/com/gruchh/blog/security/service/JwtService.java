@@ -1,16 +1,15 @@
 package com.gruchh.blog.security.service;
 
 import com.gruchh.blog.core.entity.Role;
-import com.gruchh.blog.security.exception.JwtConfigurationException;
+import com.gruchh.blog.security.config.JwtProperties;
 import com.gruchh.blog.security.exception.JwtException;
 import com.gruchh.blog.security.exception.JwtTokenExpiredException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -22,25 +21,10 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class JwtService {
 
-    @Value("${jwt.token.secretKey}")
-    private String secretkey;
-
-    @Value("${jwt.token.duration:3600000}")
-    private Long tokenDurationTime;
-
-    @Value("${jwt.token.issuer:nobody}")
-    private String tokenIssuer;
-
-    @PostConstruct
-    public void init() {
-        if (secretkey == null || secretkey.length() < 32) {
-            log.error("Loaded JWT key is too short: {} characters", secretkey != null ? secretkey.length() : 0);
-            throw new JwtConfigurationException("JWT key must have at least 32 characters for HS256 algorithm");
-        }
-        log.info("JwtService initialized with key length of {} characters", secretkey.length());
-    }
+    private final JwtProperties jwtProperties;
 
     public String generateToken(String username, String email, Set<Role> roles) {
         Map<String, Object> claims = new HashMap<>();
@@ -52,15 +36,15 @@ public class JwtService {
         return Jwts.builder()
                 .claims(claims)
                 .subject(username)
-                .issuer(tokenIssuer)
+                .issuer(jwtProperties.getIssuer())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + tokenDurationTime))
+                .expiration(new Date(System.currentTimeMillis() + jwtProperties.getDuration()))
                 .signWith(getKey(), Jwts.SIG.HS256)
                 .compact();
     }
 
     private SecretKey getKey() {
-        byte[] keyBytes = secretkey.getBytes(StandardCharsets.UTF_8);
+        byte[] keyBytes = jwtProperties.getSecretKey().getBytes(StandardCharsets.UTF_8);
         log.debug("Retrieving JWT key, length: {} bytes", keyBytes.length);
         return Keys.hmacShaKeyFor(keyBytes);
     }
@@ -170,6 +154,6 @@ public class JwtService {
     }
 
     public long getTokenDurationTime() {
-        return tokenDurationTime;
+        return jwtProperties.getDuration();
     }
 }

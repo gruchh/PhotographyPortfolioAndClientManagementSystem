@@ -1,17 +1,19 @@
 package com.gruchh.blog.security.service;
 
 import com.gruchh.blog.core.entity.Role;
-import com.gruchh.blog.security.mapper.UserResponseMapper;
-import com.gruchh.blog.security.repository.UserRepository;
 import com.gruchh.blog.security.dto.JwtAuthRequest;
 import com.gruchh.blog.security.dto.RegisterRequest;
 import com.gruchh.blog.security.dto.UserProfileResponse;
 import com.gruchh.blog.security.entity.User;
+import com.gruchh.blog.security.mapper.UserResponseMapper;
+import com.gruchh.blog.security.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -68,6 +70,21 @@ public class UserService {
         } else {
             throw new BadCredentialsException("Authentication failed for user: " + request.getUsername());
         }
+    }
+
+    public User getCurrentUser() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String username;
+
+        if (principal instanceof UserDetails) {
+            username = ((UserDetails) principal).getUsername();
+        } else if (principal instanceof String) {
+            username = (String) principal;
+        } else {
+            throw new NoSuchElementException("No authenticated user found");
+        }
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new NoSuchElementException("User not found: " + username));
     }
 
     public UserProfileResponse getCurrentUserInfo(String username) {
