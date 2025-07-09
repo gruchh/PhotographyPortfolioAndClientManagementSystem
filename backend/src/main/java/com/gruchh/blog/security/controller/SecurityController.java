@@ -5,10 +5,8 @@ import com.gruchh.blog.security.dto.JwtAuthRequest;
 import com.gruchh.blog.security.dto.JwtAuthResponse;
 import com.gruchh.blog.security.dto.RegisterRequest;
 import com.gruchh.blog.security.dto.UserProfileResponse;
-import com.gruchh.blog.security.exception.ValidationException;
 import com.gruchh.blog.security.filter.JwtTokenValidator;
 import com.gruchh.blog.security.service.UserService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,23 +52,12 @@ public class SecurityController {
     }
 
     @GetMapping("/getCurrentUser")
-    public ResponseEntity<UserProfileResponse> getCurrentUser(HttpServletRequest request) {
+    public ResponseEntity<UserProfileResponse> getCurrentUser() {
         log.info("Przetwarzanie żądania getCurrentUser");
         try {
-            String username = jwtTokenValidator.validateToken(request)
-                    .orElseThrow(() -> new RuntimeException("Błąd walidacji tokenu"));
-            log.debug("Zweryfikowano token dla użytkownika: {}", username);
-            UserProfileResponse response = userService.getCurrentUserInfo(username);
+            UserProfileResponse response = userService.getCurrentUserInfo();
             response.setStatus("success");
-            log.debug("Pobrano dane użytkownika: {}", username);
             return ResponseEntity.ok(response);
-        } catch (ValidationException e) {
-            log.warn("Błąd walidacji JWT: {}", e.getMessage());
-            return ResponseEntity.status(e.getStatus())
-                    .body(UserProfileResponse.builder()
-                            .status("error")
-                            .message(e.getMessage())
-                            .build());
         } catch (Exception e) {
             log.error("Błąd podczas pobierania danych użytkownika", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

@@ -87,10 +87,8 @@ public class UserService {
                 .orElseThrow(() -> new NoSuchElementException("User not found: " + username));
     }
 
-    public UserProfileResponse getCurrentUserInfo(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new NoSuchElementException("User not found: " + username));
-    return userResponseMapper.toUserProfileResponse(user);
-
+    public UserProfileResponse getCurrentUserInfo() {
+        User user = getCurrentUser();
+        return userResponseMapper.toUserProfileResponse(user);
     }
 }
