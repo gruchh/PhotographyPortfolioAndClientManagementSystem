@@ -87,6 +87,11 @@ public class UserService {
                 .orElseThrow(() -> new NoSuchElementException("User not found: " + username));
     }
 
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("User not found with id: " + id));
+    }
+
     public UserProfileResponse getCurrentUserInfo() {
         User user = getCurrentUser();
         return userResponseMapper.toUserProfileResponse(user);
